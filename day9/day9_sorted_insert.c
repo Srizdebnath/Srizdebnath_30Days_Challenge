@@ -1,44 +1,110 @@
+#include <assert.h>
+#include <limits.h>
+#include <math.h>
+#include <stdbool.h>
+#include <stddef.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-typedef struct DoublyLinkedListNode {
+char* readline();
+
+typedef struct DoublyLinkedListNode DoublyLinkedListNode;
+typedef struct DoublyLinkedList DoublyLinkedList;
+
+struct DoublyLinkedListNode {
     int data;
-    struct DoublyLinkedListNode* next;
-    struct DoublyLinkedListNode* prev;
-} DoublyLinkedListNode;
+    DoublyLinkedListNode* next;
+    DoublyLinkedListNode* prev;
+};
 
-DoublyLinkedListNode* create_node(int data) {
-    DoublyLinkedListNode* node = (DoublyLinkedListNode*)malloc(sizeof(DoublyLinkedListNode));
-    node->data = data;
+struct DoublyLinkedList {
+    DoublyLinkedListNode* head;
+    DoublyLinkedListNode* tail;
+};
+
+DoublyLinkedListNode* create_doubly_linked_list_node(int node_data) {
+    DoublyLinkedListNode* node = malloc(sizeof(DoublyLinkedListNode));
+
+    node->data = node_data;
     node->next = NULL;
     node->prev = NULL;
+
     return node;
 }
 
-DoublyLinkedListNode* sortedInsert(DoublyLinkedListNode* head, int data) {
-    DoublyLinkedListNode* new_node = create_node(data);
+void insert_node_into_doubly_linked_list(DoublyLinkedList** doubly_linked_list, int node_data) {
+    DoublyLinkedListNode* node = create_doubly_linked_list_node(node_data);
+
+    if (!(*doubly_linked_list)->head) {
+        (*doubly_linked_list)->head = node;
+    } else {
+        (*doubly_linked_list)->tail->next = node;
+        node->prev = (*doubly_linked_list)->tail;
+    }
+
+    (*doubly_linked_list)->tail = node;
+}
+
+void print_doubly_linked_list(DoublyLinkedListNode* node, char* sep, FILE* fptr) {
+    while (node) {
+        fprintf(fptr, "%d", node->data);
+
+        node = node->next;
+
+        if (node) {
+            fprintf(fptr, "%s", sep);
+        }
+    }
+}
+
+void free_doubly_linked_list(DoublyLinkedListNode* node) {
+    while (node) {
+        DoublyLinkedListNode* temp = node;
+        node = node->next;
+
+        free(temp);
+    }
+}
+
+/*
+ * Complete the 'sortedInsert' function below.
+ *
+ * The function is expected to return an INTEGER_DOUBLY_LINKED_LIST.
+ * The function accepts following parameters:
+ *  1. INTEGER_DOUBLY_LINKED_LIST llist
+ *  2. INTEGER data
+ */
+
+/*
+ * For your reference:
+ *
+ * DoublyLinkedListNode {
+ *     int data;
+ *     DoublyLinkedListNode* next;
+ *     DoublyLinkedListNode* prev;
+ * };
+ *
+ */
+
+DoublyLinkedListNode* sortedInsert(DoublyLinkedListNode* llist, int data) {
+    DoublyLinkedListNode* new_node = create_doubly_linked_list_node(data);
     
-    // Case 1: Empty list
-    if (head == NULL) {
+    if (llist == NULL) {
         return new_node;
     }
     
-    // Case 2: Insert before the head
-    if (data <= head->data) {
-        new_node->next = head;
-        head->prev = new_node;
+    if (data <= llist->data) {
+        new_node->next = llist;
+        llist->prev = new_node;
         return new_node;
     }
     
-    DoublyLinkedListNode* current = head;
-    
-    // Case 3: Insert in the middle or at the end
+    DoublyLinkedListNode* current = llist;
     while (current->next != NULL && current->next->data < data) {
         current = current->next;
     }
-    
-    // Now current points to the node after which new_node should be inserted
-    // OR current is the last node and data is greater than all existing nodes
     
     new_node->next = current->next;
     new_node->prev = current;
@@ -48,62 +114,91 @@ DoublyLinkedListNode* sortedInsert(DoublyLinkedListNode* head, int data) {
     }
     current->next = new_node;
     
-    return head;
+    return llist;
 }
 
-void print_list(DoublyLinkedListNode* head) {
-    DoublyLinkedListNode* current = head;
-    while (current != NULL) {
-        printf("%d", current->data);
-        if (current->next != NULL) {
-            printf(" ");
+
+
+int main()
+{
+    FILE* fptr = fopen(getenv("OUTPUT_PATH"), "w");
+
+    char* t_endptr;
+    char* t_str = readline();
+    int t = strtol(t_str, &t_endptr, 10);
+
+    if (t_endptr == t_str || *t_endptr != '\0') { exit(EXIT_FAILURE); }
+
+    for (int t_itr = 0; t_itr < t; t_itr++) {
+        DoublyLinkedList* llist = malloc(sizeof(DoublyLinkedList));
+        llist->head = NULL;
+        llist->tail = NULL;
+
+        char* llist_count_endptr;
+        char* llist_count_str = readline();
+        int llist_count = strtol(llist_count_str, &llist_count_endptr, 10);
+
+        if (llist_count_endptr == llist_count_str || *llist_count_endptr != '\0') { exit(EXIT_FAILURE); }
+
+        for (int i = 0; i < llist_count; i++) {
+            char* llist_item_endptr;
+            char* llist_item_str = readline();
+            int llist_item = strtol(llist_item_str, &llist_item_endptr, 10);
+
+            if (llist_item_endptr == llist_item_str || *llist_item_endptr != '\0') { exit(EXIT_FAILURE); }
+
+            insert_node_into_doubly_linked_list(&llist, llist_item);
         }
-        current = current->next;
-    }
-    printf("\n");
-}
 
-void free_list(DoublyLinkedListNode* head) {
-    DoublyLinkedListNode* current = head;
-    while (current != NULL) {
-        DoublyLinkedListNode* temp = current;
-        current = current->next;
-        free(temp);
-    }
-}
+        char* data_endptr;
+        char* data_str = readline();
+        int data = strtol(data_str, &data_endptr, 10);
 
-int main() {
-    int t;
-    if (scanf("%d", &t) != 1) return 0;
-    
-    while (t--) {
-        int n;
-        if (scanf("%d", &n) != 1) break;
-        
-        DoublyLinkedListNode* head = NULL;
-        DoublyLinkedListNode* tail = NULL;
-        
-        for (int i = 0; i < n; i++) {
-            int val;
-            scanf("%d", &val);
-            DoublyLinkedListNode* node = create_node(val);
-            if (head == NULL) {
-                head = node;
-                tail = node;
-            } else {
-                tail->next = node;
-                node->prev = tail;
-                tail = node;
-            }
-        }
-        
-        int data;
-        scanf("%d", &data);
-        
-        head = sortedInsert(head, data);
-        print_list(head);
-        free_list(head);
+        if (data_endptr == data_str || *data_endptr != '\0') { exit(EXIT_FAILURE); }
+
+        DoublyLinkedListNode* llist1 = sortedInsert(llist->head, data);
+
+        char *sep = " ";
+
+        print_doubly_linked_list(llist1, sep, fptr);
+        fprintf(fptr, "\n");
+
+        free_doubly_linked_list(llist1);
     }
-    
+
+    fclose(fptr);
+
     return 0;
+}
+
+char* readline() {
+    size_t alloc_length = 1024;
+    size_t data_length = 0;
+    char* data = malloc(alloc_length);
+
+    while (true) {
+        char* cursor = data + data_length;
+        char* line = fgets(cursor, alloc_length - data_length, stdin);
+
+        if (!line) { break; }
+
+        data_length += strlen(cursor);
+
+        if (data_length < alloc_length - 1 || data[data_length - 1] == '\n') { break; }
+
+        size_t new_length = alloc_length << 1;
+        data = realloc(data, new_length);
+
+        if (!data) { break; }
+
+        alloc_length = new_length;
+    }
+
+    if (data[data_length - 1] == '\n') {
+        data[data_length - 1] = '\0';
+    }
+
+    data = realloc(data, data_length);
+
+    return data;
 }
